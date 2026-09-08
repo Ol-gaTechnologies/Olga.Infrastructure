@@ -1,0 +1,34 @@
+variable "resource_group_name" { type = string }
+variable "location" { type = string }
+variable "environment" { type = string }
+variable "suffix" { type = string }
+variable "tags" { type = map(string) }
+variable "container_apps_subnet_id" { type = string }
+variable "log_analytics_workspace_id" { type = string }
+variable "application_insights_connection_string" {
+  type      = string
+  sensitive = true
+}
+variable "acr_id" { type = string }
+variable "acr_login_server" { type = string }
+variable "key_vault_id" { type = string }
+variable "key_vault_uri" { type = string }
+variable "postgres_connection_secret_uri" { type = string }
+variable "service_token_secret_uri" { type = string }
+variable "core_identity_id" { type = string }
+variable "core_identity_principal_id" { type = string }
+variable "nlp_identity_id" { type = string }
+variable "nlp_identity_principal_id" { type = string }
+variable "worker_identity_id" { type = string }
+variable "core_api_image" { type = string }
+variable "nlp_api_image" { type = string }
+variable "use_acr_images" { type = bool }
+variable "enable_api_management" { type = bool }
+variable "apim_publisher_name" { type = string }
+variable "apim_publisher_email" { type = string }
+variable "enable_admin_static_web_app" { type = bool }
+variable "enable_azure_openai" { type = bool }
+variable "azure_openai_model_version" { type = string }
+variable "enable_content_safety" { type = bool }
+variable "enable_signalr" { type = bool }
+variable "enable_notification_hubs" { type = bool }

@@ -1,0 +1,8 @@
+variable "resource_group_name" { type = string }
+variable "location" { type = string }
+variable "environment" { type = string }
+variable "suffix" { type = string }
+variable "tags" { type = map(string) }
+variable "budget_amount_usd" { type = number }
+variable "budget_alert_emails" { type = list(string) }
+
