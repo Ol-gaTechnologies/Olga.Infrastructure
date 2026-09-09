@@ -2,6 +2,8 @@
 
 Terraform project for isolated OLGA Connect development, test, and production environments.
 
+GitHub Actions validation, planning, deployment, environment setup, and incident guidance are documented in [docs/TERRAFORM_CI_CD.md](docs/TERRAFORM_CI_CD.md).
+
 ## Provisioned baseline
 
 - Resource group, mandatory tags, monthly budget alerts
@@ -58,4 +60,3 @@ Run `D:\OLGA\Projects\database\olga-database\deploy.ps1` from a VNet-connected r
 - NLP API expects the same probes and secrets. Development sets `EmbeddingProvider=Fake` and `EmbeddingProcessing__Mode=Inline`.
 - Enable Azure OpenAI only after the NLP adapter is implemented and regional model quota is approved.
 - API Management is not enabled by default; enable it after the OpenAPI import, OIDC validation, throttling, and policy configuration are defined.
-
