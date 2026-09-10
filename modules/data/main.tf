@@ -155,8 +155,8 @@ resource "azurerm_storage_account" "this" {
     default_action = "Deny"
     bypass         = ["AzureServices"]
   }
-  shared_access_key_enabled       = false
-  tags                            = var.tags
+  shared_access_key_enabled = false
+  tags                      = var.tags
 }
 
 resource "azapi_resource" "blob_service" {
