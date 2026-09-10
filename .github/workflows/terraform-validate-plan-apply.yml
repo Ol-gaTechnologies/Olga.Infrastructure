@@ -13,11 +13,6 @@ on:
         default: dev
         type: choice
         options: [dev, prd]
-      confirm_destroy:
-        description: Allow a reviewed destructive dev deployment
-        required: true
-        default: false
-        type: boolean
 
 permissions:
   contents: read
@@ -224,6 +219,11 @@ jobs:
           update_count=$(jq '[.resource_changes[]? | select(.change.actions == ["update"])] | length' "$RUNNER_TEMP/tfplan.json")
           replace_count=$(jq '[.resource_changes[]? | select((.change.actions | index("create")) != null and (.change.actions | index("delete")) != null)] | length' "$RUNNER_TEMP/tfplan.json")
           destroy_count=$(jq '[.resource_changes[]? | select((.change.actions | index("delete")) != null)] | length' "$RUNNER_TEMP/tfplan.json")
+          jq -r '
+            .resource_changes[]?
+            | select(.change.actions != ["no-op"])
+            | "\(.change.actions | join("/"))\t\(.address)"
+          ' "$RUNNER_TEMP/tfplan.json" | sort > plan/resource-actions.txt
           {
             echo "### Terraform plan"
             echo "- Environment: \`$DEPLOY_ENVIRONMENT\`"
@@ -234,8 +234,16 @@ jobs:
             echo "- Includes delete: $destroy_count"
             [[ $destroy_count -eq 0 ]] || echo "- **Destructive change detected: review before approval.**"
             echo
-            echo "Values and outputs are intentionally omitted."
+            echo "#### Resource actions (values omitted)"
+            echo '```text'
+            if [[ -s plan/resource-actions.txt ]]; then
+              cat plan/resource-actions.txt
+            else
+              echo "No resource changes."
+            fi
+            echo '```'
           } > plan/plan-summary.md
+          cat plan/plan-summary.md
           cat plan/plan-summary.md >> "$GITHUB_STEP_SUMMARY"
           (cd plan && sha256sum tfplan > tfplan.sha256)
           jq -n --arg commit "$GITHUB_SHA" --arg environment "$DEPLOY_ENVIRONMENT" \
@@ -254,22 +262,10 @@ jobs:
           if-no-files-found: error
           retention-days: 2
 
-      - name: Block unconfirmed destructive dev deployment
-        if: >-
-          github.event_name != 'pull_request' &&
-          needs.quality.outputs.environment == 'dev' &&
-          steps.summary.outputs.destroy_count != '0' &&
-          !(github.event_name == 'workflow_dispatch' && inputs.confirm_destroy)
-        env:
-          DESTROY_COUNT: ${{ steps.summary.outputs.destroy_count }}
-        run: |
-          echo "::error::$DESTROY_COUNT destructive action(s) detected. Review the artifact, then use manual dispatch with confirm_destroy."
-          exit 1
-
   apply:
     name: Apply ${{ needs.quality.outputs.environment }}
     if: >-
-      github.event_name != 'pull_request' &&
+      github.event_name == 'workflow_dispatch' &&
       needs.plan.result == 'success' &&
       needs.plan.outputs.has_changes == 'true'
     needs: [quality, plan]
