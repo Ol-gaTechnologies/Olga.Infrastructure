@@ -46,13 +46,20 @@ terraform apply dev.tfplan
 
 The initial dev configuration uses a $50 monthly budget with alerts at 50%, 80%, and 100%; a December 1, 2026 review date; PostgreSQL `B_Standard_B1ms`; 32 GiB database storage; Container Apps scaling from zero to one replica; and 0.1 GB/day telemetry caps. Service Bus, API Management, Static Web Apps, Azure OpenAI, Content Safety, SignalR, and Notification Hubs remain disabled.
 
-The first apply uses Microsoft's public Container Apps bootstrap image. After building and pushing the API images, set immutable image references and enable ACR pulls:
+The first apply uses Microsoft's public Container Apps bootstrap image. Application repositories own subsequent immutable image revisions; Terraform owns identities, secrets, registry authentication, ingress, and ports. Core and NLP are independently configurable and both use port `8080` by default:
 
 ```hcl
-use_acr_images = true
-core_api_image = "<acr>.azurecr.io/olga-core-api:<commit-sha>"
-nlp_api_image  = "<acr>.azurecr.io/olga-nlp-api:<commit-sha>"
+core_application_delivery_enabled = true
+core_health_probes_enabled         = false
+nlp_application_delivery_enabled  = true
+nlp_health_probes_enabled          = false
 ```
+
+The infrastructure apply creates one deployment identity per repository, trusts only that repository's immutable subject for the matching GitHub Environment, grants `AcrPush` on the registry, and grants `Container Apps Contributor` only on the corresponding Container App. After apply, set `core_deployment_identity_client_id` in the Core repository and `nlp_deployment_identity_client_id` in the NLP repository as their respective `AZURE_CLIENT_ID` values.
+
+Run the Core deployment workflow now. The NLP identity and Container App configuration can remain ready until the NLP code is deployed later. Enable each service's health probes only after its real image exposes `/health` and `/ready` on port `8080`.
+
+Do not use application deployment identities for Terraform or at runtime. The Container Apps continue to use `id-olga-core-<environment>` and `id-olga-nlp-<environment>` for ACR pull and Key Vault access.
 
 ## Database deployment
 

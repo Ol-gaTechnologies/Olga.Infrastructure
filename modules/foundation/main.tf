@@ -55,6 +55,68 @@ resource "azurerm_user_assigned_identity" "worker" {
   tags                = var.tags
 }
 
+resource "azurerm_user_assigned_identity" "core_deploy" {
+  name                = "id-gh-olga-core-${var.environment}-deploy"
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
+  tags                = var.tags
+}
+
+resource "azapi_resource" "core_deploy_federation" {
+  type      = "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2023-01-31"
+  name      = "github-${var.environment}"
+  parent_id = azurerm_user_assigned_identity.core_deploy.id
+
+  body = {
+    properties = {
+      audiences = ["api://AzureADTokenExchange"]
+      issuer    = "https://token.actions.githubusercontent.com"
+      subject   = var.core_deploy_oidc_subject
+    }
+  }
+
+  retry {
+    error_message_regex  = ["(?i)MS Graph resource not found", "(?i)ParentResourceNotFound"]
+    interval_seconds     = 5
+    max_interval_seconds = 30
+  }
+
+  timeouts {
+    create = "5m"
+  }
+}
+
+resource "azurerm_user_assigned_identity" "nlp_deploy" {
+  name                = "id-gh-olga-nlp-${var.environment}-deploy"
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
+  tags                = var.tags
+}
+
+resource "azapi_resource" "nlp_deploy_federation" {
+  type      = "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2023-01-31"
+  name      = "github-${var.environment}"
+  parent_id = azurerm_user_assigned_identity.nlp_deploy.id
+
+  body = {
+    properties = {
+      audiences = ["api://AzureADTokenExchange"]
+      issuer    = "https://token.actions.githubusercontent.com"
+      subject   = var.nlp_deploy_oidc_subject
+    }
+  }
+
+  retry {
+    error_message_regex  = ["(?i)MS Graph resource not found", "(?i)ParentResourceNotFound"]
+    interval_seconds     = 5
+    max_interval_seconds = 30
+  }
+
+  timeouts {
+    create = "5m"
+  }
+}
+
 resource "random_password" "postgres_admin" {
   length           = 32
   special          = true

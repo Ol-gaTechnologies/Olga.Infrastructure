@@ -59,6 +59,17 @@ repo:ORG/REPOSITORY:environment:prd
 
 Do not add secrets or broad repository/pull-request federated subjects to apply identities. GitHub Environment deployment-branch rules are part of this trust boundary.
 
+Application delivery uses separate identities managed by this Terraform project:
+
+- Core identity: `id-gh-olga-core-<environment>-deploy`
+- Core dev subject: `repo:Ol-gaTechnologies@306667340/Olga.Core@1358930841:environment:dev`
+- NLP identity: `id-gh-olga-nlp-<environment>-deploy`
+- NLP dev subject: `repo:Ol-gaTechnologies@306667340/olga-nlp-api@1356082344:environment:dev`
+- Registry permission: each identity has `AcrPush` scoped to the environment ACR
+- Deployment permission: each identity has `Container Apps Contributor` scoped only to its own Container App
+
+After Terraform creates the identities, copy `core_deployment_identity_client_id` and `nlp_deployment_identity_client_id` to the matching repository GitHub Environment as `AZURE_CLIENT_ID`. Keep tenant, subscription, ACR login server, resource group, and Container App variables aligned with the infrastructure outputs. Each application workflow owns image digest releases and supplies their revision suffixes. Terraform intentionally ignores image drift while continuing to manage all other Container App configuration; Azure generates a fresh suffix for any Terraform-driven template revision.
+
 ## Minimum Azure RBAC
 
 Plan identities need `Reader` over only the target scope and `Storage Blob Data Contributor` on the single state container. The latter permits Azure Blob lease acquisition for Terraform state locking.

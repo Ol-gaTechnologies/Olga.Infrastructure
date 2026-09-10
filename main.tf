@@ -1,14 +1,16 @@
 module "foundation" {
   source = "./modules/foundation"
 
-  resource_group_name = local.resource_group
-  location            = var.location
-  environment         = var.environment
-  suffix              = local.suffix
-  tags                = local.tags
-  budget_amount_usd   = var.budget_amount_usd
-  budget_alert_emails = var.budget_alert_emails
-  expiry_date         = var.expiry_date
+  resource_group_name      = local.resource_group
+  location                 = var.location
+  environment              = var.environment
+  suffix                   = local.suffix
+  tags                     = local.tags
+  budget_amount_usd        = var.budget_amount_usd
+  budget_alert_emails      = var.budget_alert_emails
+  expiry_date              = var.expiry_date
+  core_deploy_oidc_subject = local.core_deploy_oidc_subject
+  nlp_deploy_oidc_subject  = local.nlp_deploy_oidc_subject
 }
 
 module "network" {
@@ -61,9 +63,14 @@ module "platform" {
   core_identity_principal_id             = module.foundation.core_identity_principal_id
   nlp_identity_id                        = module.foundation.nlp_identity_id
   nlp_identity_principal_id              = module.foundation.nlp_identity_principal_id
+  core_deploy_identity_principal_id       = module.foundation.core_deploy_identity_principal_id
+  nlp_deploy_identity_principal_id        = module.foundation.nlp_deploy_identity_principal_id
   core_api_image                         = var.core_api_image
   nlp_api_image                          = var.nlp_api_image
-  use_acr_images                         = var.use_acr_images
+  core_application_delivery_enabled      = local.core_delivery_enabled
+  core_health_probes_enabled              = var.core_health_probes_enabled
+  nlp_application_delivery_enabled       = local.nlp_delivery_enabled
+  nlp_health_probes_enabled               = var.nlp_health_probes_enabled
   enable_api_management                  = var.enable_api_management
   apim_publisher_name                    = var.apim_publisher_name
   apim_publisher_email                   = var.apim_publisher_email

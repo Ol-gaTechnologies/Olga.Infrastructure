@@ -64,21 +64,78 @@ variable "postgres_storage_mb" {
 }
 
 variable "core_api_image" {
-  description = "Immutable Core API image. The public bootstrap image allows infrastructure-first provisioning."
+  description = "Core API bootstrap image used when the Container App is created. The Core delivery workflow owns later image revisions."
   type        = string
   default     = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
 }
 
 variable "nlp_api_image" {
-  description = "Immutable NLP API image."
+  description = "NLP API bootstrap image used when the Container App is created. The NLP delivery workflow owns later image revisions."
   type        = string
   default     = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
 }
 
 variable "use_acr_images" {
-  description = "Enable after both API images have been pushed to the provisioned ACR."
+  description = "Compatibility switch that enables ACR delivery for both APIs. Prefer the Core-specific switch for a Core-only release."
   type        = bool
   default     = false
+}
+
+variable "core_application_delivery_enabled" {
+  description = "Configure Core API for its ACR-hosted .NET image on port 8080."
+  type        = bool
+  default     = true
+}
+
+variable "core_health_probes_enabled" {
+  description = "Enable Core /health and /ready probes after those endpoints have been validated in the deployed image."
+  type        = bool
+  default     = false
+}
+
+variable "nlp_application_delivery_enabled" {
+  description = "Configure NLP API for its ACR-hosted .NET image on port 8080."
+  type        = bool
+  default     = true
+}
+
+variable "nlp_health_probes_enabled" {
+  description = "Enable NLP /health and /ready probes after those endpoints have been validated in the deployed image."
+  type        = bool
+  default     = false
+}
+
+variable "github_organization_subject" {
+  description = "Immutable GitHub organization subject component in NAME@DATABASE_ID format."
+  type        = string
+  default     = "Ol-gaTechnologies@306667340"
+
+  validation {
+    condition     = can(regex("^[^/@]+@[0-9]+$", var.github_organization_subject))
+    error_message = "github_organization_subject must use NAME@DATABASE_ID format."
+  }
+}
+
+variable "core_github_repository_subject" {
+  description = "Immutable GitHub Core repository subject component in NAME@DATABASE_ID format."
+  type        = string
+  default     = "Olga.Core@1358930841"
+
+  validation {
+    condition     = can(regex("^[^/@]+@[0-9]+$", var.core_github_repository_subject))
+    error_message = "core_github_repository_subject must use NAME@DATABASE_ID format."
+  }
+}
+
+variable "nlp_github_repository_subject" {
+  description = "Immutable GitHub NLP repository subject component in NAME@DATABASE_ID format."
+  type        = string
+  default     = "olga-nlp-api@1356082344"
+
+  validation {
+    condition     = can(regex("^[^/@]+@[0-9]+$", var.nlp_github_repository_subject))
+    error_message = "nlp_github_repository_subject must use NAME@DATABASE_ID format."
+  }
 }
 
 variable "enable_api_management" {

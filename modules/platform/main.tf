@@ -19,6 +19,20 @@ resource "azurerm_role_assignment" "nlp_acr_pull" {
   principal_id         = var.nlp_identity_principal_id
 }
 
+resource "azurerm_role_assignment" "core_deploy_acr_push" {
+  scope                            = var.acr_id
+  role_definition_name             = "AcrPush"
+  principal_id                     = var.core_deploy_identity_principal_id
+  skip_service_principal_aad_check = true
+}
+
+resource "azurerm_role_assignment" "nlp_deploy_acr_push" {
+  scope                            = var.acr_id
+  role_definition_name             = "AcrPush"
+  principal_id                     = var.nlp_deploy_identity_principal_id
+  skip_service_principal_aad_check = true
+}
+
 resource "azurerm_container_app" "core_api" {
   name                         = "ca-olga-core-api-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.this.id
@@ -44,7 +58,7 @@ resource "azurerm_container_app" "core_api" {
   }
 
   dynamic "registry" {
-    for_each = var.use_acr_images ? [1] : []
+    for_each = var.core_application_delivery_enabled ? [1] : []
     content {
       server   = var.acr_login_server
       identity = var.core_identity_id
@@ -63,7 +77,7 @@ resource "azurerm_container_app" "core_api" {
 
       env {
         name  = "ASPNETCORE_ENVIRONMENT"
-        value = "Development"
+        value = var.environment == "prod" ? "Production" : "Development"
       }
       env {
         name        = "ConnectionStrings__PostgreSql"
@@ -79,7 +93,7 @@ resource "azurerm_container_app" "core_api" {
       }
 
       dynamic "liveness_probe" {
-        for_each = var.use_acr_images ? [1] : []
+        for_each = var.core_health_probes_enabled ? [1] : []
         content {
           transport               = "HTTP"
           port                    = 8080
@@ -91,7 +105,7 @@ resource "azurerm_container_app" "core_api" {
       }
 
       dynamic "readiness_probe" {
-        for_each = var.use_acr_images ? [1] : []
+        for_each = var.core_health_probes_enabled ? [1] : []
         content {
           transport               = "HTTP"
           port                    = 8080
@@ -106,7 +120,7 @@ resource "azurerm_container_app" "core_api" {
 
   ingress {
     external_enabled = true
-    target_port      = var.use_acr_images ? 8080 : 80
+    target_port      = var.core_application_delivery_enabled ? 8080 : 80
     transport        = "auto"
 
     traffic_weight {
@@ -115,7 +129,18 @@ resource "azurerm_container_app" "core_api" {
     }
   }
 
+  lifecycle {
+    ignore_changes = [template[0].container[0].image]
+  }
+
   depends_on = [azurerm_role_assignment.core_acr_pull]
+}
+
+resource "azurerm_role_assignment" "core_deploy_container_app" {
+  scope                            = azurerm_container_app.core_api.id
+  role_definition_name             = "Container Apps Contributor"
+  principal_id                     = var.core_deploy_identity_principal_id
+  skip_service_principal_aad_check = true
 }
 
 resource "azurerm_container_app" "nlp_api" {
@@ -143,7 +168,7 @@ resource "azurerm_container_app" "nlp_api" {
   }
 
   dynamic "registry" {
-    for_each = var.use_acr_images ? [1] : []
+    for_each = var.nlp_application_delivery_enabled ? [1] : []
     content {
       server   = var.acr_login_server
       identity = var.nlp_identity_id
@@ -162,7 +187,7 @@ resource "azurerm_container_app" "nlp_api" {
 
       env {
         name  = "ASPNETCORE_ENVIRONMENT"
-        value = "Development"
+        value = var.environment == "prod" ? "Production" : "Development"
       }
       env {
         name        = "ConnectionStrings__PostgreSql"
@@ -186,7 +211,7 @@ resource "azurerm_container_app" "nlp_api" {
       }
 
       dynamic "liveness_probe" {
-        for_each = var.use_acr_images ? [1] : []
+        for_each = var.nlp_health_probes_enabled ? [1] : []
         content {
           transport               = "HTTP"
           port                    = 8080
@@ -198,7 +223,7 @@ resource "azurerm_container_app" "nlp_api" {
       }
 
       dynamic "readiness_probe" {
-        for_each = var.use_acr_images ? [1] : []
+        for_each = var.nlp_health_probes_enabled ? [1] : []
         content {
           transport               = "HTTP"
           port                    = 8080
@@ -213,7 +238,7 @@ resource "azurerm_container_app" "nlp_api" {
 
   ingress {
     external_enabled = false
-    target_port      = var.use_acr_images ? 8080 : 80
+    target_port      = var.nlp_application_delivery_enabled ? 8080 : 80
     transport        = "auto"
 
     traffic_weight {
@@ -222,7 +247,18 @@ resource "azurerm_container_app" "nlp_api" {
     }
   }
 
+  lifecycle {
+    ignore_changes = [template[0].container[0].image]
+  }
+
   depends_on = [azurerm_role_assignment.nlp_acr_pull]
+}
+
+resource "azurerm_role_assignment" "nlp_deploy_container_app" {
+  scope                            = azurerm_container_app.nlp_api.id
+  role_definition_name             = "Container Apps Contributor"
+  principal_id                     = var.nlp_deploy_identity_principal_id
+  skip_service_principal_aad_check = true
 }
 
 resource "azurerm_signalr_service" "this" {

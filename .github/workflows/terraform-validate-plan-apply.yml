@@ -403,6 +403,23 @@ jobs:
             exit "$exit_code"
           fi
 
+      - name: Publish application deployment identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          core_client_id=$(terraform output -raw core_deployment_identity_client_id)
+          core_subject=$(terraform output -raw core_deployment_oidc_subject)
+          nlp_client_id=$(terraform output -raw nlp_deployment_identity_client_id)
+          nlp_subject=$(terraform output -raw nlp_deployment_oidc_subject)
+          {
+            echo
+            echo "### Application GitHub OIDC"
+            echo "- Core \`AZURE_CLIENT_ID\`: \`$core_client_id\`"
+            echo "- Core subject: \`$core_subject\`"
+            echo "- NLP \`AZURE_CLIENT_ID\`: \`$nlp_client_id\`"
+            echo "- NLP subject: \`$nlp_subject\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   fork-plan-notice:
     name: Fork plan policy
     if: >-

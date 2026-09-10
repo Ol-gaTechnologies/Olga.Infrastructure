@@ -6,3 +6,5 @@ variable "tags" { type = map(string) }
 variable "budget_amount_usd" { type = number }
 variable "budget_alert_emails" { type = list(string) }
 variable "expiry_date" { type = string }
+variable "core_deploy_oidc_subject" { type = string }
+variable "nlp_deploy_oidc_subject" { type = string }
