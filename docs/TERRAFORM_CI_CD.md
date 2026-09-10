@@ -121,3 +121,5 @@ GitHub-hosted Ubuntu runners are appropriate while the state data plane and requ
 ## Maintenance
 
 Terraform, TFLint, the Azure TFLint plugin, and Trivy are pinned; downloaded scanner binaries are checksum-verified. GitHub Actions are pinned to immutable commit SHAs, and Dependabot checks them weekly. Promote upgrades through dev before production.
+
+The budget start date is selected as the first day of the creation month and then ignored for drift because Azure treats it as immutable. A routine plan must not replace a budget merely because Terraform was run again. Budget replacement is expected only when an operator intentionally changes a replacement-only budget property.

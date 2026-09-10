@@ -146,4 +146,10 @@ resource "azurerm_consumption_budget_resource_group" "this" {
       contact_emails = var.budget_alert_emails
     }
   }
+
+  lifecycle {
+    # Azure treats the budget start date as immutable. Set it on creation, then
+    # retain it so timestamp() does not cause a replacement on every later plan.
+    ignore_changes = [time_period[0].start_date]
+  }
 }
