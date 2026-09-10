@@ -17,7 +17,6 @@ module "network" {
   resource_group_name = module.foundation.resource_group_name
   location            = var.location
   environment         = var.environment
-  suffix              = local.suffix
   tags                = local.tags
 }
 
@@ -56,15 +55,12 @@ module "platform" {
   application_insights_connection_string = module.foundation.application_insights_connection_string
   acr_id                                 = module.foundation.acr_id
   acr_login_server                       = module.foundation.acr_login_server
-  key_vault_id                           = module.data.key_vault_id
-  key_vault_uri                          = module.data.key_vault_uri
   postgres_connection_secret_uri         = module.data.postgres_connection_secret_uri
   service_token_secret_uri               = module.data.service_token_secret_uri
   core_identity_id                       = module.foundation.core_identity_id
   core_identity_principal_id             = module.foundation.core_identity_principal_id
   nlp_identity_id                        = module.foundation.nlp_identity_id
   nlp_identity_principal_id              = module.foundation.nlp_identity_principal_id
-  worker_identity_id                     = module.foundation.worker_identity_id
   core_api_image                         = var.core_api_image
   nlp_api_image                          = var.nlp_api_image
   use_acr_images                         = var.use_acr_images

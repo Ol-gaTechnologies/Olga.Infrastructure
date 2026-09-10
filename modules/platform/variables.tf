@@ -11,15 +11,12 @@ variable "application_insights_connection_string" {
 }
 variable "acr_id" { type = string }
 variable "acr_login_server" { type = string }
-variable "key_vault_id" { type = string }
-variable "key_vault_uri" { type = string }
 variable "postgres_connection_secret_uri" { type = string }
 variable "service_token_secret_uri" { type = string }
 variable "core_identity_id" { type = string }
 variable "core_identity_principal_id" { type = string }
 variable "nlp_identity_id" { type = string }
 variable "nlp_identity_principal_id" { type = string }
-variable "worker_identity_id" { type = string }
 variable "core_api_image" { type = string }
 variable "nlp_api_image" { type = string }
 variable "use_acr_images" { type = bool }
