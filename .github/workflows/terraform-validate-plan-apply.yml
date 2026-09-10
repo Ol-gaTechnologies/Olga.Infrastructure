@@ -265,7 +265,7 @@ jobs:
   apply:
     name: Apply ${{ needs.quality.outputs.environment }}
     if: >-
-      github.event_name == 'workflow_dispatch' &&
+      github.event_name != 'pull_request' &&
       needs.plan.result == 'success' &&
       needs.plan.outputs.has_changes == 'true'
     needs: [quality, plan]
@@ -360,7 +360,13 @@ jobs:
           if terraform apply -input=false -no-color -lock-timeout=10m plan/tfplan > "$apply_log" 2>&1; then
             echo "Applied the reviewed \`$DEPLOY_ENVIRONMENT\` plan." >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "::error::Terraform apply failed; output is suppressed to protect sensitive values."
+            echo "::error::Terraform apply failed. See the Terraform apply output below."
+            echo "::group::Terraform apply output"
+            stop_commands_token="$(cat /proc/sys/kernel/random/uuid)"
+            echo "::stop-commands::$stop_commands_token"
+            cat "$apply_log"
+            echo "::$stop_commands_token::"
+            echo "::endgroup::"
             exit 1
           fi
 
