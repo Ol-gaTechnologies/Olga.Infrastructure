@@ -35,6 +35,10 @@ resource "azurerm_postgresql_flexible_server" "this" {
     password_auth_enabled         = true
   }
 
+  lifecycle {
+    ignore_changes = [zone]
+  }
+
   depends_on = [azurerm_private_dns_zone_virtual_network_link.postgres]
 }
 
@@ -159,10 +163,9 @@ resource "azurerm_storage_account" "this" {
   tags                      = var.tags
 }
 
-resource "azapi_resource" "blob_service" {
-  type      = "Microsoft.Storage/storageAccounts/blobServices@2023-05-01"
-  parent_id = azurerm_storage_account.this.id
-  name      = "default"
+resource "azapi_update_resource" "blob_service" {
+  type        = "Microsoft.Storage/storageAccounts/blobServices@2023-05-01"
+  resource_id = "${azurerm_storage_account.this.id}/blobServices/default"
   body = {
     properties = {
       deleteRetentionPolicy          = { enabled = true, days = 7 }
@@ -175,7 +178,7 @@ resource "azapi_resource" "container" {
   for_each = toset(["chat-files", "verification-evidence", "privacy-exports", "evaluation-reports"])
 
   type      = "Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01"
-  parent_id = azapi_resource.blob_service.id
+  parent_id = azapi_update_resource.blob_service.id
   name      = each.value
   body = {
     properties = {
