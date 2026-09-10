@@ -139,10 +139,14 @@ jobs:
       TFSTATE_CONTAINER: ${{ vars.TFSTATE_CONTAINER }}
       TFSTATE_KEY: ${{ vars.TFSTATE_KEY }}
       TF_VAR_subscription_id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_tenant_id: ${{ vars.AZURE_TENANT_ID }}
       TF_VAR_environment: ${{ needs.quality.outputs.terraform_environment }}
       TF_VAR_location: ${{ vars.AZURE_LOCATION }}
       TF_VAR_owner: ${{ vars.OWNER }}
+      TF_VAR_cost_center: ${{ vars.COST_CENTER }}
       TF_VAR_expiry_date: ${{ vars.EXPIRY_DATE }}
+      TF_VAR_budget_amount_usd: ${{ vars.BUDGET_AMOUNT_USD }}
+      TF_VAR_budget_alert_emails: ${{ vars.BUDGET_ALERT_EMAILS }}
     outputs:
       has_changes: ${{ steps.summary.outputs.has_changes }}
       destroy_count: ${{ steps.summary.outputs.destroy_count }}
@@ -164,7 +168,8 @@ jobs:
           set -euo pipefail
           for name in ARM_CLIENT_ID ARM_TENANT_ID ARM_SUBSCRIPTION_ID \
             TFSTATE_RESOURCE_GROUP TFSTATE_STORAGE_ACCOUNT TFSTATE_CONTAINER TFSTATE_KEY \
-            TF_VAR_location TF_VAR_owner TF_VAR_expiry_date; do
+            TF_VAR_tenant_id TF_VAR_location TF_VAR_owner TF_VAR_cost_center TF_VAR_expiry_date \
+            TF_VAR_budget_amount_usd TF_VAR_budget_alert_emails; do
             if [[ -z "${!name:-}" ]]; then
               echo "::error::Required plan environment variable $name is not configured."
               exit 1

@@ -1,4 +1,4 @@
-# Example automatically loaded variable set for the OLGA Connect dev environment.
+# Example variable set for the OLGA Connect dev environment. Copy it to an ignored .auto.tfvars file for local use.
 subscription_id     = "e0bb013f-a8af-4d60-9c5b-0140b361f257"
 tenant_id           = "9972baa6-9591-43d7-8b13-59da8e6f1a72"
 environment         = "dev"

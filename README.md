@@ -26,7 +26,7 @@ GitHub Actions validation, planning, deployment, environment setup, and incident
 
 ## First development deployment
 
-The checked-in `olga-connect-dev.example.auto.tfvars` file is configured for the `olga-connect-dev` subscription in tenant `9972baa6-9591-43d7-8b13-59da8e6f1a72`. Terraform automatically loads files ending in `.auto.tfvars`; the local `olga-connect-dev.auto.tfvars` copy is ignored by Git.
+The checked-in `olga-connect-dev.example.tfvars` file is configured for the `olga-connect-dev` subscription in tenant `9972baa6-9591-43d7-8b13-59da8e6f1a72`. Terraform does not load this example file automatically. For local deployment, copy it to `olga-connect-dev.auto.tfvars`, which Terraform loads automatically and Git ignores.
 
 ```powershell
 .\scripts\bootstrap-state.ps1 `
@@ -34,7 +34,7 @@ The checked-in `olga-connect-dev.example.auto.tfvars` file is configured for the
   -Location 'malaysiawest' `
   -StorageAccountName '<globally-unique-state-account>' > backend.hcl
 
-Copy-Item .\olga-connect-dev.example.auto.tfvars .\olga-connect-dev.auto.tfvars
+Copy-Item .\olga-connect-dev.example.tfvars .\olga-connect-dev.auto.tfvars
 # Fill non-secret environment values in olga-connect-dev.auto.tfvars.
 
 terraform init -backend-config=backend.hcl

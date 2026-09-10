@@ -37,8 +37,14 @@ Configure these environment-scoped variables in every matching plan/apply enviro
 | `TFSTATE_STORAGE_ACCOUNT` | Existing state storage account |
 | `TFSTATE_CONTAINER` | State container, typically `tfstate` |
 | `TFSTATE_KEY` | `olga/dev.tfstate` or `olga/prd.tfstate` |
+| `AZURE_LOCATION` | Azure deployment region, such as `malaysiawest` |
+| `OWNER` | Resource owner tag, such as `olga-platform` |
+| `COST_CENTER` | Cost allocation tag, such as `olga-connect` |
+| `EXPIRY_DATE` | Review/expiry date in `YYYY-MM-DD` format |
+| `BUDGET_AMOUNT_USD` | Monthly Azure budget amount, `50` for dev |
+| `BUDGET_ALERT_EMAILS` | Terraform list value, for example `["sreedharan@ol-ga.com"]` |
 
-The `dev-plan` and `prd-plan` environments also require `AZURE_LOCATION`, `OWNER`, and `EXPIRY_DATE`. Add future non-secret Terraform inputs as environment variables mapped to `TF_VAR_*`. Never store client secrets, storage keys, passwords, state, saved plans, or sensitive tfvars as GitHub variables.
+The plan workflow maps these GitHub Environment variables to Terraform `TF_VAR_*` inputs. Add future non-secret Terraform inputs the same way. Never store client secrets, storage keys, passwords, state, saved plans, or sensitive tfvars as GitHub variables.
 
 ## Azure OIDC federation
 
