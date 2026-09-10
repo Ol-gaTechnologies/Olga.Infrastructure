@@ -12,17 +12,19 @@ resource "azurerm_log_analytics_workspace" "this" {
   resource_group_name = azurerm_resource_group.this.name
   sku                 = "PerGB2018"
   retention_in_days   = 30
-  daily_quota_gb      = 1
+  daily_quota_gb      = 0.1
   tags                = var.tags
 }
 
 resource "azurerm_application_insights" "this" {
-  name                = "appi-olga-${var.environment}-${var.suffix}"
-  location            = azurerm_resource_group.this.location
-  resource_group_name = azurerm_resource_group.this.name
-  workspace_id        = azurerm_log_analytics_workspace.this.id
-  application_type    = "web"
-  tags                = var.tags
+  name                 = "appi-olga-${var.environment}-${var.suffix}"
+  location             = azurerm_resource_group.this.location
+  resource_group_name  = azurerm_resource_group.this.name
+  workspace_id         = azurerm_log_analytics_workspace.this.id
+  application_type     = "web"
+  daily_data_cap_in_gb = 0.1
+  sampling_percentage  = 20
+  tags                 = var.tags
 }
 
 resource "azurerm_container_registry" "this" {
@@ -71,6 +73,7 @@ resource "azurerm_consumption_budget_resource_group" "this" {
 
   time_period {
     start_date = formatdate("YYYY-MM-01'T'00:00:00'Z'", timestamp())
+    end_date   = "${var.expiry_date}T00:00:00Z"
   }
 
   dynamic "notification" {
@@ -84,4 +87,3 @@ resource "azurerm_consumption_budget_resource_group" "this" {
     }
   }
 }
-

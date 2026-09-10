@@ -53,13 +53,13 @@ resource "azurerm_container_app" "core_api" {
 
   template {
     min_replicas = 0
-    max_replicas = 2
+    max_replicas = 1
 
     container {
       name   = "core-api"
       image  = var.core_api_image
-      cpu    = 0.5
-      memory = "1Gi"
+      cpu    = 0.25
+      memory = "0.5Gi"
 
       env {
         name  = "ASPNETCORE_ENVIRONMENT"
@@ -152,13 +152,13 @@ resource "azurerm_container_app" "nlp_api" {
 
   template {
     min_replicas = 0
-    max_replicas = 2
+    max_replicas = 1
 
     container {
       name   = "nlp-api"
       image  = var.nlp_api_image
-      cpu    = 0.5
-      memory = "1Gi"
+      cpu    = 0.25
+      memory = "0.5Gi"
 
       env {
         name  = "ASPNETCORE_ENVIRONMENT"
@@ -332,4 +332,3 @@ resource "azurerm_static_web_app" "admin" {
   sku_size            = "Free"
   tags                = var.tags
 }
-

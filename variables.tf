@@ -3,6 +3,11 @@ variable "subscription_id" {
   type        = string
 }
 
+variable "tenant_id" {
+  description = "Microsoft Entra tenant containing the Azure subscription."
+  type        = string
+}
+
 variable "environment" {
   description = "Deployment environment name."
   type        = string
@@ -35,7 +40,7 @@ variable "expiry_date" {
 
 variable "budget_amount_usd" {
   type    = number
-  default = 100
+  default = 50
 }
 
 variable "budget_alert_emails" {
@@ -109,16 +114,21 @@ variable "azure_openai_model_version" {
 
 variable "enable_content_safety" {
   type    = bool
-  default = true
+  default = false
 }
 
 variable "enable_signalr" {
   type    = bool
-  default = true
+  default = false
 }
 
 variable "enable_notification_hubs" {
   type    = bool
-  default = true
+  default = false
 }
 
+variable "enable_service_bus" {
+  description = "Provision Service Bus Standard only when asynchronous messaging is being tested."
+  type        = bool
+  default     = false
+}

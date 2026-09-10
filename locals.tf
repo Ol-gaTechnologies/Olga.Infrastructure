@@ -1,6 +1,6 @@
 locals {
   workload       = "olga"
-  suffix         = substr(lower(replace("${var.environment}-${var.location}-${var.subscription_id}", "/[^0-9a-z]/", "")), 0, 18)
+  suffix         = substr(lower(replace("${var.environment}-${var.location}-${var.subscription_id}", "/[^0-9a-z]/", "")), 0, 16)
   resource_group = "rg-${local.workload}-${var.environment}-${var.location}"
   tags = {
     product     = "olga-connect"
@@ -12,4 +12,3 @@ locals {
     managedBy   = "terraform"
   }
 }
-

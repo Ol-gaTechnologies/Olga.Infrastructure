@@ -8,6 +8,7 @@ module "foundation" {
   tags                = local.tags
   budget_amount_usd   = var.budget_amount_usd
   budget_alert_emails = var.budget_alert_emails
+  expiry_date         = var.expiry_date
 }
 
 module "network" {
@@ -35,6 +36,7 @@ module "data" {
   postgres_admin_password      = module.foundation.postgres_admin_password
   postgres_sku_name            = var.postgres_sku_name
   postgres_storage_mb          = var.postgres_storage_mb
+  enable_service_bus           = var.enable_service_bus
   core_identity_principal_id   = module.foundation.core_identity_principal_id
   nlp_identity_principal_id    = module.foundation.nlp_identity_principal_id
   worker_identity_principal_id = module.foundation.worker_identity_principal_id

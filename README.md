@@ -12,7 +12,7 @@ GitHub Actions validation, planning, deployment, environment setup, and incident
 - VNet and delegated Container Apps/PostgreSQL subnets
 - PostgreSQL 17 Flexible Server, private DNS, 7-day development backup, `vector` and `pg_stat_statements`
 - Private Key Vault and Blob Storage with purpose-specific containers
-- Service Bus Standard queues with duplicate detection and dead-letter behavior
+- Optional Service Bus Standard queues with duplicate detection and dead-letter behavior
 - Product API with external ingress and NLP API with internal ingress
 - Optional SignalR, Notification Hubs, Content Safety, Azure OpenAI, API Management, and Static Web Apps
 
@@ -26,14 +26,16 @@ GitHub Actions validation, planning, deployment, environment setup, and incident
 
 ## First development deployment
 
+The checked-in `olga-connect-dev.example.auto.tfvars` file is configured for the `olga-connect-dev` subscription in tenant `9972baa6-9591-43d7-8b13-59da8e6f1a72`. Terraform automatically loads files ending in `.auto.tfvars`; the local `olga-connect-dev.auto.tfvars` copy is ignored by Git.
+
 ```powershell
 .\scripts\bootstrap-state.ps1 `
-  -SubscriptionId '<subscription-id>' `
+  -SubscriptionId 'e0bb013f-a8af-4d60-9c5b-0140b361f257' `
   -Location 'malaysiawest' `
   -StorageAccountName '<globally-unique-state-account>' > backend.hcl
 
-Copy-Item .\dev.example.auto.tfvars .\dev.auto.tfvars
-# Fill non-secret environment values in dev.auto.tfvars.
+Copy-Item .\olga-connect-dev.example.auto.tfvars .\olga-connect-dev.auto.tfvars
+# Fill non-secret environment values in olga-connect-dev.auto.tfvars.
 
 terraform init -backend-config=backend.hcl
 terraform fmt -recursive
@@ -41,6 +43,8 @@ terraform validate
 terraform plan -out=dev.tfplan
 terraform apply dev.tfplan
 ```
+
+The initial dev configuration uses a $50 monthly budget with alerts at 50%, 80%, and 100%; a December 1, 2026 review date; PostgreSQL `B_Standard_B1ms`; 32 GiB database storage; Container Apps scaling from zero to one replica; and 0.1 GB/day telemetry caps. Service Bus, API Management, Static Web Apps, Azure OpenAI, Content Safety, SignalR, and Notification Hubs remain disabled.
 
 The first apply uses Microsoft's public Container Apps bootstrap image. After building and pushing the API images, set immutable image references and enable ACR pulls:
 

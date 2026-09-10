@@ -214,6 +214,8 @@ resource "azurerm_private_endpoint" "blob" {
 }
 
 resource "azurerm_servicebus_namespace" "this" {
+  count = var.enable_service_bus ? 1 : 0
+
   name                = "sb-olga-${var.suffix}"
   location            = var.location
   resource_group_name = var.resource_group_name
@@ -224,10 +226,10 @@ resource "azurerm_servicebus_namespace" "this" {
 }
 
 resource "azurerm_servicebus_queue" "work" {
-  for_each = toset(["embedding", "content-scan", "notification", "privacy-retention", "outbox"])
+  for_each = var.enable_service_bus ? toset(["embedding", "content-scan", "notification", "privacy-retention", "outbox"]) : toset([])
 
   name                                    = each.value
-  namespace_id                            = azurerm_servicebus_namespace.this.id
+  namespace_id                            = azurerm_servicebus_namespace.this[0].id
   max_delivery_count                      = 5
   lock_duration                           = "PT1M"
   dead_lettering_on_message_expiration    = true
@@ -262,18 +264,18 @@ resource "azurerm_role_assignment" "blob_data_contributor" {
 }
 
 resource "azurerm_role_assignment" "servicebus_data_sender" {
-  for_each = local.application_principals
+  for_each = var.enable_service_bus ? local.application_principals : {}
 
-  scope                            = azurerm_servicebus_namespace.this.id
+  scope                            = azurerm_servicebus_namespace.this[0].id
   role_definition_name             = "Azure Service Bus Data Sender"
   principal_id                     = each.value
   skip_service_principal_aad_check = true
 }
 
 resource "azurerm_role_assignment" "servicebus_data_receiver" {
-  for_each = toset([var.nlp_identity_principal_id, var.worker_identity_principal_id])
+  for_each = var.enable_service_bus ? toset([var.nlp_identity_principal_id, var.worker_identity_principal_id]) : toset([])
 
-  scope                            = azurerm_servicebus_namespace.this.id
+  scope                            = azurerm_servicebus_namespace.this[0].id
   role_definition_name             = "Azure Service Bus Data Receiver"
   principal_id                     = each.value
   skip_service_principal_aad_check = true

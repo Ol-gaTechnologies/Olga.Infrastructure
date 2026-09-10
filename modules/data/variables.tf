@@ -13,6 +13,7 @@ variable "postgres_admin_password" {
 }
 variable "postgres_sku_name" { type = string }
 variable "postgres_storage_mb" { type = number }
+variable "enable_service_bus" { type = bool }
 variable "core_identity_principal_id" { type = string }
 variable "nlp_identity_principal_id" { type = string }
 variable "worker_identity_principal_id" { type = string }
