@@ -106,7 +106,7 @@ resource "azurerm_container_app" "core_api" {
 
   ingress {
     external_enabled = true
-    target_port      = 8080
+    target_port      = var.use_acr_images ? 8080 : 80
     transport        = "auto"
 
     traffic_weight {
@@ -213,7 +213,7 @@ resource "azurerm_container_app" "nlp_api" {
 
   ingress {
     external_enabled = false
-    target_port      = 8080
+    target_port      = var.use_acr_images ? 8080 : 80
     transport        = "auto"
 
     traffic_weight {
