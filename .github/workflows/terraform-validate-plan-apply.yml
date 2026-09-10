@@ -195,12 +195,29 @@ jobs:
           set -euo pipefail
           mkdir plan
           set +e
-          terraform plan -input=false -no-color -detailed-exitcode -lock-timeout=5m \
-            -out=plan/tfplan > "$RUNNER_TEMP/terraform-plan.log" 2>&1
-          exit_code=$?
+          terraform plan -input=false -json -detailed-exitcode -lock-timeout=5m \
+            -out=plan/tfplan | jq --unbuffered -r '
+              if .type == "refresh_start" or
+                 .type == "refresh_complete" or
+                 .type == "planned_change" or
+                 .type == "change_summary" then
+                .["@message"] // empty
+              elif .type == "diagnostic" then
+                "Terraform \(.diagnostic.severity): \(.diagnostic.summary // "unspecified diagnostic")"
+              else
+                empty
+              end
+            '
+          pipeline_status=("${PIPESTATUS[@]}")
+          exit_code=${pipeline_status[0]}
+          filter_exit_code=${pipeline_status[1]}
           set -e
+          if [[ $filter_exit_code -ne 0 ]]; then
+            echo "::error::The Terraform plan event filter failed with exit code $filter_exit_code."
+            exit "$filter_exit_code"
+          fi
           if [[ $exit_code -eq 1 ]]; then
-            echo "::error::Terraform plan failed; output is suppressed to protect sensitive values."
+            echo "::error::Terraform plan failed. Review the filtered diagnostic summary above."
             exit 1
           fi
           [[ $exit_code -eq 2 ]] && has_changes=true || has_changes=false
@@ -252,7 +269,7 @@ jobs:
             > plan/manifest.json
           echo "has_changes=$HAS_CHANGES" >> "$GITHUB_OUTPUT"
           echo "destroy_count=$destroy_count" >> "$GITHUB_OUTPUT"
-          rm -f "$RUNNER_TEMP/tfplan.json" "$RUNNER_TEMP/terraform-plan.log"
+          rm -f "$RUNNER_TEMP/tfplan.json"
 
       - name: Upload saved plan
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -355,19 +372,35 @@ jobs:
           DEPLOY_ENVIRONMENT: ${{ needs.quality.outputs.environment }}
         run: |
           set -euo pipefail
-          apply_log="$RUNNER_TEMP/terraform-apply.log"
-          trap 'rm -f "$apply_log"' EXIT
-          if terraform apply -input=false -no-color -lock-timeout=10m plan/tfplan > "$apply_log" 2>&1; then
+          set +e
+          terraform apply -input=false -json -lock-timeout=10m plan/tfplan | jq --unbuffered -r '
+            if .type == "refresh_start" or
+               .type == "refresh_complete" or
+               .type == "apply_start" or
+               .type == "apply_progress" or
+               .type == "apply_complete" or
+               .type == "apply_errored" or
+               .type == "change_summary" then
+              .["@message"] // empty
+            elif .type == "diagnostic" then
+              "Terraform \(.diagnostic.severity): \(.diagnostic.summary // "unspecified diagnostic")"
+            else
+              empty
+            end
+          '
+          pipeline_status=("${PIPESTATUS[@]}")
+          exit_code=${pipeline_status[0]}
+          filter_exit_code=${pipeline_status[1]}
+          set -e
+          if [[ $filter_exit_code -ne 0 ]]; then
+            echo "::error::The Terraform apply event filter failed with exit code $filter_exit_code."
+            exit "$filter_exit_code"
+          fi
+          if [[ $exit_code -eq 0 ]]; then
             echo "Applied the reviewed \`$DEPLOY_ENVIRONMENT\` plan." >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "::error::Terraform apply failed. See the Terraform apply output below."
-            echo "::group::Terraform apply output"
-            stop_commands_token="$(cat /proc/sys/kernel/random/uuid)"
-            echo "::stop-commands::$stop_commands_token"
-            cat "$apply_log"
-            echo "::$stop_commands_token::"
-            echo "::endgroup::"
-            exit 1
+            echo "::error::Terraform apply failed with exit code $exit_code. Review the filtered diagnostic summary above."
+            exit "$exit_code"
           fi
 
   fork-plan-notice:
