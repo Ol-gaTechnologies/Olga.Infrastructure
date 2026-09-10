@@ -50,14 +50,14 @@ The first apply uses Microsoft's public Container Apps bootstrap image. Applicat
 
 ```hcl
 core_application_delivery_enabled = true
-core_health_probes_enabled         = false
+core_health_probes_enabled         = true
 nlp_application_delivery_enabled  = true
-nlp_health_probes_enabled          = false
+nlp_health_probes_enabled          = true
 ```
 
 The infrastructure apply creates one deployment identity per repository, trusts only that repository's immutable subject for the matching GitHub Environment, grants `AcrPush` on the registry, and grants `Container Apps Contributor` only on the corresponding Container App. After apply, set `core_deployment_identity_client_id` in the Core repository and `nlp_deployment_identity_client_id` in the NLP repository as their respective `AZURE_CLIENT_ID` values.
 
-Run the Core deployment workflow now. The NLP identity and Container App configuration can remain ready until the NLP code is deployed later. Enable each service's health probes only after its real image exposes `/health` and `/ready` on port `8080`.
+The Core and NLP images expose `/health` and `/ready` on port `8080`, so Terraform enables both liveness and database-readiness probes by default. Keep these probes enabled for future releases; a new revision must not receive traffic or remain active when its process or PostgreSQL dependency is unhealthy.
 
 Do not use application deployment identities for Terraform or at runtime. The Container Apps continue to use `id-olga-core-<environment>` and `id-olga-nlp-<environment>` for ACR pull and Key Vault access.
 

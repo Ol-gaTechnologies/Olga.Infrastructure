@@ -88,9 +88,9 @@ variable "core_application_delivery_enabled" {
 }
 
 variable "core_health_probes_enabled" {
-  description = "Enable Core /health and /ready probes after those endpoints have been validated in the deployed image."
+  description = "Enable Core liveness (/health) and database-readiness (/ready) probes."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "nlp_application_delivery_enabled" {
@@ -100,9 +100,9 @@ variable "nlp_application_delivery_enabled" {
 }
 
 variable "nlp_health_probes_enabled" {
-  description = "Enable NLP /health and /ready probes after those endpoints have been validated in the deployed image."
+  description = "Enable NLP liveness (/health) and database-readiness (/ready) probes."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "github_organization_subject" {
