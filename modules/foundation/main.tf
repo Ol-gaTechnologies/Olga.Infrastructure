@@ -75,7 +75,7 @@ resource "azapi_resource" "core_deploy_federation" {
     }
   }
 
-  retry {
+  retry = {
     error_message_regex  = ["(?i)MS Graph resource not found", "(?i)ParentResourceNotFound"]
     interval_seconds     = 5
     max_interval_seconds = 30
@@ -106,7 +106,7 @@ resource "azapi_resource" "nlp_deploy_federation" {
     }
   }
 
-  retry {
+  retry = {
     error_message_regex  = ["(?i)MS Graph resource not found", "(?i)ParentResourceNotFound"]
     interval_seconds     = 5
     max_interval_seconds = 30
