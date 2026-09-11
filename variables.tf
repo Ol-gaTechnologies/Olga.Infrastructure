@@ -63,6 +63,42 @@ variable "postgres_storage_mb" {
   default = 32768
 }
 
+variable "postgres_access_by_environment" {
+  description = "Non-secret PostgreSQL administration access settings keyed by Terraform environment. Public access remains disabled when an environment is absent or has no firewall rules."
+  type = map(object({
+    entra_admin = object({
+      object_id      = string
+      principal_name = string
+      principal_type = optional(string, "User")
+    })
+    firewall_rules = map(object({
+      start_ip_address = string
+      end_ip_address   = string
+    }))
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue(flatten([
+      for access in values(var.postgres_access_by_environment) : [
+        for rule in values(access.firewall_rules) :
+        can(cidrnetmask("${rule.start_ip_address}/32")) &&
+        can(cidrnetmask("${rule.end_ip_address}/32")) &&
+        rule.start_ip_address == rule.end_ip_address
+      ]
+    ]))
+    error_message = "PostgreSQL administrator firewall rules must be exact IPv4 /32 rules with identical start and end addresses."
+  }
+
+  validation {
+    condition = alltrue([
+      for access in values(var.postgres_access_by_environment) :
+      contains(["User", "Group", "ServicePrincipal"], access.entra_admin.principal_type)
+    ])
+    error_message = "PostgreSQL Entra administrator principal_type must be User, Group, or ServicePrincipal."
+  }
+}
+
 variable "core_api_image" {
   description = "Core API bootstrap image used when the Container App is created. The Core delivery workflow owns later image revisions."
   type        = string
@@ -135,6 +171,17 @@ variable "nlp_github_repository_subject" {
   validation {
     condition     = can(regex("^[^/@]+@[0-9]+$", var.nlp_github_repository_subject))
     error_message = "nlp_github_repository_subject must use NAME@DATABASE_ID format."
+  }
+}
+
+variable "database_github_repository_subject" {
+  description = "Immutable GitHub database repository subject component in NAME@DATABASE_ID format."
+  type        = string
+  default     = "olga-database@1356201535"
+
+  validation {
+    condition     = can(regex("^[^/@]+@[0-9]+$", var.database_github_repository_subject))
+    error_message = "database_github_repository_subject must use NAME@DATABASE_ID format."
   }
 }
 

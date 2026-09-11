@@ -33,6 +33,80 @@ resource "azurerm_role_assignment" "nlp_deploy_acr_push" {
   skip_service_principal_aad_check = true
 }
 
+resource "azurerm_role_assignment" "database_migration_acr_pull" {
+  scope                = var.acr_id
+  role_definition_name = "AcrPull"
+  principal_id         = var.database_migration_identity_principal_id
+}
+
+resource "azurerm_role_assignment" "database_deploy_acr_push" {
+  scope                            = var.acr_id
+  role_definition_name             = "AcrPush"
+  principal_id                     = var.database_deploy_identity_principal_id
+  skip_service_principal_aad_check = true
+}
+
+resource "azurerm_container_app_job" "database_migration" {
+  name                         = "job-olga-database-${var.environment}"
+  location                     = var.location
+  resource_group_name          = var.resource_group_name
+  container_app_environment_id = azurerm_container_app_environment.this.id
+  replica_timeout_in_seconds   = 1800
+  replica_retry_limit          = 0
+  tags                         = var.tags
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [var.database_migration_identity_id]
+  }
+
+  registry {
+    server   = var.acr_login_server
+    identity = var.database_migration_identity_id
+  }
+
+  secret {
+    name                = "postgresql"
+    key_vault_secret_id = var.postgres_connection_secret_uri
+    identity            = var.database_migration_identity_id
+  }
+
+  manual_trigger_config {
+    parallelism              = 1
+    replica_completion_count = 1
+  }
+
+  template {
+    container {
+      name    = "database-migration"
+      image   = "mcr.microsoft.com/azurelinux/base/core:3.0"
+      cpu     = 0.25
+      memory  = "0.5Gi"
+      command = ["/bin/sh", "-c"]
+      args    = ["echo 'No migration image supplied; refusing to run.' >&2; exit 1"]
+
+      env {
+        name        = "OLGA_POSTGRES_CONNECTION_STRING"
+        secret_name = "postgresql"
+      }
+
+      env {
+        name  = "SEED_MVP_POLICIES"
+        value = "0"
+      }
+    }
+  }
+
+  depends_on = [azurerm_role_assignment.database_migration_acr_pull]
+}
+
+resource "azurerm_role_assignment" "database_deploy_job" {
+  scope                            = azurerm_container_app_job.database_migration.id
+  role_definition_name             = "Container Apps Jobs Operator"
+  principal_id                     = var.database_deploy_identity_principal_id
+  skip_service_principal_aad_check = true
+}
+
 resource "azurerm_container_app" "core_api" {
   name                         = "ca-olga-core-api-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.this.id

@@ -1,7 +1,7 @@
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_private_dns_zone" "postgres" {
-  name                = "private.postgres.database.azure.com"
+  name                = "privatelink.postgres.database.azure.com"
   resource_group_name = var.resource_group_name
   tags                = var.tags
 }
@@ -19,9 +19,7 @@ resource "azurerm_postgresql_flexible_server" "this" {
   resource_group_name           = var.resource_group_name
   location                      = var.location
   version                       = "17"
-  delegated_subnet_id           = var.postgres_subnet_id
-  private_dns_zone_id           = azurerm_private_dns_zone.postgres.id
-  public_network_access_enabled = false
+  public_network_access_enabled = length(var.postgres_firewall_rules) > 0
   administrator_login           = var.postgres_admin_username
   administrator_password        = var.postgres_admin_password
   sku_name                      = var.postgres_sku_name
@@ -31,7 +29,7 @@ resource "azurerm_postgresql_flexible_server" "this" {
   tags                          = var.tags
 
   authentication {
-    active_directory_auth_enabled = false
+    active_directory_auth_enabled = var.postgres_entra_admin != null
     password_auth_enabled         = true
   }
 
@@ -39,7 +37,46 @@ resource "azurerm_postgresql_flexible_server" "this" {
     ignore_changes = [zone]
   }
 
-  depends_on = [azurerm_private_dns_zone_virtual_network_link.postgres]
+}
+
+resource "azurerm_postgresql_flexible_server_firewall_rule" "dbeaver" {
+  for_each = var.postgres_firewall_rules
+
+  name             = each.key
+  server_id        = azurerm_postgresql_flexible_server.this.id
+  start_ip_address = each.value.start_ip_address
+  end_ip_address   = each.value.end_ip_address
+}
+
+resource "azurerm_postgresql_flexible_server_active_directory_administrator" "this" {
+  count = var.postgres_entra_admin == null ? 0 : 1
+
+  server_name         = azurerm_postgresql_flexible_server.this.name
+  resource_group_name = var.resource_group_name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  object_id           = var.postgres_entra_admin.object_id
+  principal_name      = var.postgres_entra_admin.principal_name
+  principal_type      = var.postgres_entra_admin.principal_type
+}
+
+resource "azurerm_private_endpoint" "postgres" {
+  name                = "pe-postgresql-${var.environment}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.private_endpoint_subnet_id
+  tags                = var.tags
+
+  private_service_connection {
+    name                           = "psc-postgresql"
+    private_connection_resource_id = azurerm_postgresql_flexible_server.this.id
+    subresource_names              = ["postgresqlServer"]
+    is_manual_connection           = false
+  }
+
+  private_dns_zone_group {
+    name                 = "postgresql"
+    private_dns_zone_ids = [azurerm_private_dns_zone.postgres.id]
+  }
 }
 
 resource "azurerm_postgresql_flexible_server_database" "this" {
@@ -68,7 +105,7 @@ resource "azurerm_key_vault" "this" {
   tenant_id                     = data.azurerm_client_config.current.tenant_id
   sku_name                      = "standard"
   rbac_authorization_enabled    = true
-  public_network_access_enabled = false
+  public_network_access_enabled = length(var.postgres_firewall_rules) > 0
   purge_protection_enabled      = var.environment == "prod"
   soft_delete_retention_days    = 7
   tags                          = var.tags
@@ -76,6 +113,9 @@ resource "azurerm_key_vault" "this" {
   network_acls {
     bypass         = "AzureServices"
     default_action = "Deny"
+    ip_rules = [
+      for rule in values(var.postgres_firewall_rules) : "${rule.start_ip_address}/32"
+    ]
   }
 }
 
@@ -132,6 +172,14 @@ resource "azapi_resource" "postgres_connection" {
       value = local.postgres_connection_string
     }
   }
+}
+
+resource "azurerm_role_assignment" "database_administrator_connection_secret_reader" {
+  count = var.postgres_entra_admin == null ? 0 : 1
+
+  scope                = azapi_resource.postgres_connection.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = var.postgres_entra_admin.object_id
 }
 
 resource "azapi_resource" "service_token" {
@@ -251,10 +299,13 @@ locals {
     nlp    = var.nlp_identity_principal_id
     worker = var.worker_identity_principal_id
   }
+  key_vault_principals = merge(local.application_principals, {
+    database_migration = var.database_migration_identity_principal_id
+  })
 }
 
 resource "azurerm_role_assignment" "key_vault_secrets_user" {
-  for_each = local.application_principals
+  for_each = local.key_vault_principals
 
   scope                            = azurerm_key_vault.this.id
   role_definition_name             = "Key Vault Secrets User"

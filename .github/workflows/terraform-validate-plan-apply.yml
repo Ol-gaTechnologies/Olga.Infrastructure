@@ -411,6 +411,8 @@ jobs:
           core_subject=$(terraform output -raw core_deployment_oidc_subject)
           nlp_client_id=$(terraform output -raw nlp_deployment_identity_client_id)
           nlp_subject=$(terraform output -raw nlp_deployment_oidc_subject)
+          database_client_id=$(terraform output -raw database_deployment_identity_client_id)
+          database_subject=$(terraform output -raw database_deployment_oidc_subject)
           {
             echo
             echo "### Application GitHub OIDC"
@@ -418,6 +420,8 @@ jobs:
             echo "- Core subject: \`$core_subject\`"
             echo "- NLP \`AZURE_CLIENT_ID\`: \`$nlp_client_id\`"
             echo "- NLP subject: \`$nlp_subject\`"
+            echo "- Database \`AZURE_CLIENT_ID\`: \`$database_client_id\`"
+            echo "- Database subject: \`$database_subject\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
   fork-plan-notice:
