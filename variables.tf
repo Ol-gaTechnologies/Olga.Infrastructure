@@ -63,6 +63,20 @@ variable "postgres_storage_mb" {
   default = 32768
 }
 
+variable "postgres_allowed_extensions" {
+  description = "PostgreSQL extensions allowlisted through the azure.extensions server parameter."
+  type        = list(string)
+  default     = ["vector", "pg_stat_statements", "temporal_tables"]
+
+  validation {
+    condition = alltrue([
+      for required in ["vector", "pg_stat_statements", "temporal_tables"] :
+      contains([for extension in var.postgres_allowed_extensions : lower(trimspace(extension))], required)
+    ])
+    error_message = "postgres_allowed_extensions must include vector, pg_stat_statements, and temporal_tables."
+  }
+}
+
 variable "postgres_access_by_environment" {
   description = "Non-secret PostgreSQL administration access settings keyed by Terraform environment. Public access remains disabled when an environment is absent or has no firewall rules."
   type = map(object({

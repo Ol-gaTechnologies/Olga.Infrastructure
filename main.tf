@@ -37,6 +37,7 @@ module "data" {
   postgres_admin_password                  = module.foundation.postgres_admin_password
   postgres_sku_name                        = var.postgres_sku_name
   postgres_storage_mb                      = var.postgres_storage_mb
+  postgres_allowed_extensions              = var.postgres_allowed_extensions
   postgres_entra_admin                     = try(local.postgres_access.entra_admin, null)
   postgres_firewall_rules                  = try(local.postgres_access.firewall_rules, {})
   enable_service_bus                       = var.enable_service_bus

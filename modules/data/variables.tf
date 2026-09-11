@@ -12,6 +12,7 @@ variable "postgres_admin_password" {
 }
 variable "postgres_sku_name" { type = string }
 variable "postgres_storage_mb" { type = number }
+variable "postgres_allowed_extensions" { type = list(string) }
 variable "postgres_entra_admin" {
   type = object({
     object_id      = string

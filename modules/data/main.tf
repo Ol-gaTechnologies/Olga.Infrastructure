@@ -89,7 +89,9 @@ resource "azurerm_postgresql_flexible_server_database" "this" {
 resource "azurerm_postgresql_flexible_server_configuration" "extensions" {
   name      = "azure.extensions"
   server_id = azurerm_postgresql_flexible_server.this.id
-  value     = "VECTOR,PG_STAT_STATEMENTS"
+  value = join(",", sort(distinct([
+    for extension in var.postgres_allowed_extensions : upper(trimspace(extension))
+  ])))
 }
 
 resource "azurerm_postgresql_flexible_server_configuration" "log_lock_waits" {
