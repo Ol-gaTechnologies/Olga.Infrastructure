@@ -31,6 +31,7 @@ resource "azurerm_postgresql_flexible_server" "this" {
   authentication {
     active_directory_auth_enabled = var.postgres_entra_admin != null
     password_auth_enabled         = true
+    tenant_id                     = data.azurerm_client_config.current.tenant_id
   }
 
   lifecycle {

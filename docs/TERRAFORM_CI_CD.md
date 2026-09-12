@@ -100,9 +100,9 @@ Plan/apply command output is suppressed to avoid leaking sensitive values. The j
 
 ## Destructive changes and production approval
 
-The workflow counts every resource action containing `delete`, including replacements. Automatic destructive dev deployment fails after publishing its plan. An authorized operator must inspect the artifact and manually dispatch `dev` with `confirm_destroy=true`.
+The workflow counts every resource action containing `delete`, including replacements, and highlights the count in the job summary. Dev changes apply automatically after a successful plan, so review destructive changes during pull-request planning before merging to `develop`.
 
-Production always waits at the protected `prd` Environment after planning. Reviewers must inspect the job summary and saved plan before approval, especially when deletion is reported. The manual `confirm_destroy` input does not bypass production review. Reject unexpected destruction and correct the code; never reuse an older plan.
+Production always waits at the protected `prd` Environment after planning. Reviewers must inspect the job summary and saved plan before approval, especially when deletion is reported. Reject unexpected destruction and correct the code; never reuse an older plan.
 
 ## Branch protection recommendations
 

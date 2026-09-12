@@ -5,6 +5,13 @@ resource "azurerm_container_app_environment" "this" {
   infrastructure_subnet_id   = var.container_apps_subnet_id
   log_analytics_workspace_id = var.log_analytics_workspace_id
   tags                       = var.tags
+
+  workload_profile {
+    name                  = "Consumption"
+    workload_profile_type = "Consumption"
+    minimum_count         = 0
+    maximum_count         = 0
+  }
 }
 
 resource "azurerm_role_assignment" "core_acr_pull" {
@@ -51,6 +58,7 @@ resource "azurerm_container_app_job" "database_migration" {
   location                     = var.location
   resource_group_name          = var.resource_group_name
   container_app_environment_id = azurerm_container_app_environment.this.id
+  workload_profile_name        = "Consumption"
   replica_timeout_in_seconds   = 1800
   replica_retry_limit          = 0
   tags                         = var.tags
@@ -111,6 +119,7 @@ resource "azurerm_container_app" "core_api" {
   name                         = "ca-olga-core-api-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.this.id
   resource_group_name          = var.resource_group_name
+  workload_profile_name        = "Consumption"
   revision_mode                = "Single"
   tags                         = var.tags
 
@@ -221,6 +230,7 @@ resource "azurerm_container_app" "nlp_api" {
   name                         = "ca-olga-nlp-api-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.this.id
   resource_group_name          = var.resource_group_name
+  workload_profile_name        = "Consumption"
   revision_mode                = "Single"
   tags                         = var.tags
 

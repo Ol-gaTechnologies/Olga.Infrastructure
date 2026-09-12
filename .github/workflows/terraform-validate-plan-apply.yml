@@ -144,7 +144,6 @@ jobs:
       TF_VAR_budget_alert_emails: ${{ vars.BUDGET_ALERT_EMAILS }}
     outputs:
       has_changes: ${{ steps.summary.outputs.has_changes }}
-      destroy_count: ${{ steps.summary.outputs.destroy_count }}
     steps:
       - name: Check out source
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -268,7 +267,6 @@ jobs:
             '{commit: $commit, environment: $environment, terraform_version: $version, state_key: $state_key}' \
             > plan/manifest.json
           echo "has_changes=$HAS_CHANGES" >> "$GITHUB_OUTPUT"
-          echo "destroy_count=$destroy_count" >> "$GITHUB_OUTPUT"
           rm -f "$RUNNER_TEMP/tfplan.json"
 
       - name: Upload saved plan

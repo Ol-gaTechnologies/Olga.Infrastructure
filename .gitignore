@@ -7,3 +7,4 @@ backend.hcl
 !*.example.auto.tfvars
 !postgres-access.auto.tfvars
 crash.log
+$planPath
